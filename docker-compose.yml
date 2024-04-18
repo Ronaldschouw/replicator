@@ -37,20 +37,30 @@ services:
       - zookeeper-dc1
     ports:
       - "9091:9091"
+      - "9093:9093"
       - "9991:9991"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_JMX_PORT: 9991
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper-dc1:2181'
       KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: "http://schema-registry-dc1:8081"
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-dc1:29091,PLAINTEXT_HOST://localhost:9091
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,SSL:SSL,SSL_HOST:SSL
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-dc1:29091,PLAINTEXT_HOST://localhost:9091,SSL://broker-dc1:29093,SSL_HOST://localhost:9093
+      KAFKA_SSL_KEYSTORE_FILENAME: broker-dc1.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: cert_creds
+      KAFKA_SSL_KEY_CREDENTIALS: cert_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: broker-dc1.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: cert_creds
+      KAFKA_SSL_CLIENT_AUTH: 'required'
+      KAFKA_SECURITY_PROTOCOL: SSL
+      KAFKA_SECURITY_INTER_BROKER_PROTOCOL: SSL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
       CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
     volumes:
       - kafka_data_dc1:/var/lib/kafka/data
+      - ./secrets:/etc/kafka/secrets
 
   broker-dc2:
     image: ${REPOSITORY}/cp-kafka:${CONFLUENT_DOCKER_TAG}
@@ -187,7 +197,7 @@ services:
     environment:
       KAFKA_CLUSTERS_0_NAME: OLD
       KAFKA_CLUSTERS_1_NAME: NEW
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker-dc1:29091
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker-dc1:29093
       KAFKA_CLUSTERS_1_BOOTSTRAPSERVERS: broker-dc2:29092
       KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry-dc1:8081
       KAFKA_CLUSTERS_1_SCHEMAREGISTRY: http://schema-registry-dc2:8082
@@ -195,6 +205,18 @@ services:
       KAFKA_CLUSTERS_1_KAFKACONNECT_0_ADDRESS: http://connect-dc2:8382
       DYNAMIC_CONFIG_ENABLED: 'true'
       SERVER_SERVLET_CONTEXT_PATH: /kafka-ui
+
+      KAFKA_CLUSTERS_0_PROPERTIES_SECURITY_PROTOCOL: SSL
+      KAFKA_CLUSTERS_0_PROPERTIES_SSL_KEYSTORE_LOCATION: /server-dc1.keystore.jks
+      KAFKA_CLUSTERS_0_PROPERTIES_SSL_KEYSTORE_PASSWORD: "datahub"
+      KAFKA_CLUSTERS_0_SSL_TRUSTSTORELOCATION: /server-dc1.truststore.jks
+      KAFKA_CLUSTERS_0_SSL_TRUSTSTOREPASSWORD: "datahub"
+      KAFKA_CLUSTERS_0_PROPERTIES_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: '' # DISABLE COMMON NAME VERIFICATION
+    volumes:
+      - ./secrets/broker-dc1.truststore.jks:/server-dc1.truststore.jks
+      - ./secrets/broker-dc1.keystore.jks:/server-dc1.keystore.jks
+
+
 
   grafana:
     image: "grafana/grafana:${GRAFANA_VERSION}"
@@ -245,6 +267,22 @@ services:
     container_name: jmx-kafka102
     depends_on:
      - broker-dc2
+
+  dozzle:
+    container_name: dozzle
+    image: amir20/dozzle:v3.10.2
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    expose:
+      - 8080
+
+  dozzle_nginx:
+    image: ronaldschouw/nginx
+    container_name: dozzle_nginx
+    ports:
+      - 9999:9999
+    volumes:
+      - ./app.conf:/etc/nginx/conf.d/default.conf:cached
 
 
 volumes:
