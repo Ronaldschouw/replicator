@@ -15,18 +15,3 @@ services:
      - ./grafana/dashboards:/var/lib/grafana/dashboards
     container_name: grafana
 
-  dozzle:
-    container_name: dozzle
-    image: amir20/dozzle:v3.10.2
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    expose:
-      - 8080
-
-  dozzle_nginx:
-    image: ronaldschouw/nginx
-    container_name: dozzle_nginx
-    ports:
-      - 9999:9999
-    volumes:
-      - ./app.conf:/etc/nginx/conf.d/default.conf:cached
