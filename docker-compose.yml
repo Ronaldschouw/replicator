@@ -3,6 +3,7 @@ version: '3'
 services:
   grafana:
     image: "grafana/grafana:${GRAFANA_VERSION}"
+    container_name: strava
     expose:
      - 3000
     environment:
