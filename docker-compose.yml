@@ -185,8 +185,8 @@ services:
       - schema-registry-dc2
       - connect-dc2
     environment:
-      KAFKA_CLUSTERS_0_NAME: OLD
-      KAFKA_CLUSTERS_1_NAME: NEW
+      KAFKA_CLUSTERS_0_NAME: OLD-DC1
+      KAFKA_CLUSTERS_1_NAME: NEW-DC2
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker-dc1:29091
       KAFKA_CLUSTERS_1_BOOTSTRAPSERVERS: broker-dc2:29092
       KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry-dc1:8081
@@ -246,6 +246,21 @@ services:
     depends_on:
      - broker-dc2
 
+  dozzle:
+    container_name: dozzle
+    image: amir20/dozzle:v3.10.2
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    expose:
+      - 8080
+
+  dozzle_nginx:
+    image: ronaldschouw/nginx
+    container_name: dozzle_nginx
+    ports:
+      - 9999:9999
+    volumes:
+      - ./app.conf:/etc/nginx/conf.d/default.conf:cached
 
 volumes:
   zookeeper_data_dc1:
@@ -266,20 +281,3 @@ volumes:
   kafka_data_dc2:
     driver: local
     name: kafka_data_dc2
-
-services:
-  dozzle:
-    container_name: dozzle
-    image: amir20/dozzle:v3.10.2
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    expose:
-      - 8080
-
-  dozzle_nginx:
-    image: ronaldschouw/nginx
-    container_name: dozzle_nginx
-    ports:
-      - 9999:9999
-    volumes:
-      - ./app.conf:/etc/nginx/conf.d/default.conf:cached

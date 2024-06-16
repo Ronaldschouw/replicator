@@ -16,7 +16,7 @@ def enable_debug_logs():
 
 def produce_eneco_pt():
     #certificate_directory_path = '/home/ronald/ptest'
-    topic = 'donderdag'
+    topic = 'ronald'
     kafka_brokers = '127.0.0.1:9091'
     #cert_location = f'{certificate_directory_path}/ca.crt'
     #key_location = f'{certificate_directory_path}/ca.key'

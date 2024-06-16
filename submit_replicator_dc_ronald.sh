@@ -7,7 +7,7 @@ DATA=$( cat << EOF
   "config": {
     "connector.class": "io.confluent.connect.replicator.ReplicatorSourceConnector",
     "topic.whitelist": "ronald",
-    "topic.rename.format":"ronald.replica",
+    "topic.rename.format":"ronald.synced",
     "key.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
     "value.converter": "io.confluent.connect.replicator.util.ByteArrayConverter",
     "src.kafka.bootstrap.servers": "broker-dc1:29091",
