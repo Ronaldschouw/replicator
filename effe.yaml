@@ -1,0 +1,17 @@
+datagen-dc1-topic1:
+  image: ${REPOSITORY}/ksqldb-examples:${CONFLUENT_DOCKER_TAG}
+  hostname: datagen-dc1-topic1
+  container_name: datagen-dc1-topic1
+  depends_on:
+    - broker-dc1
+  volumes:
+    - $PWD/datagen-properties/datagen-dc1-topic1.properties:/tmp/datagen.properties
+  command: "bash -c 'echo Waiting for Kafka to be ready... && \
+                     cub kafka-ready -b broker-dc1:29091 1 90 && \
+                     sleep 10 && \
+                     kafka-topics --create --topic topic1 --bootstrap-server broker-dc1:29091 --partitions 1 --replication-factor 1 && \
+                     /usr/bin/ksql-datagen key=userid format=avro topic=topic1 msgRate=1 bootstrap-server=broker-dc1:29091 propertiesFile=/tmp/datagen.properties'"
+  environment:
+    KSQL_CONFIG_DIR: "/etc/ksql"
+    KSQL_LOG4J_OPTS: "-Dlog4j.configuration=file:/etc/ksql/log4j-silent.properties"
+    STREAMS_BOOTSTRAP_SERVERS: broker-dc1:29091
